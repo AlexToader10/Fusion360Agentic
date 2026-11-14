@@ -36,6 +36,14 @@ uv run streamlit run frontend_demo/app.py
 
 The frontend reads the backend address from `BACKEND_URL` (default `http://localhost:8000`).
 
+## Deploy
+
+```bash
+./deploy.sh
+```
+
+Builds both images and starts the backend on port 8000 and the frontend on port 8501 with Docker Compose. It needs `.env` but not the local Hermes checkout. `docker compose down` stops them.
+
 ## API
 
 | Path | What it does |

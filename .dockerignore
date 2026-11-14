@@ -1,0 +1,8 @@
+*
+!pyproject.toml
+!uv.lock
+!agent_backend
+!api_common
+!frontend_demo
+**/__pycache__
+**/.hermes_home

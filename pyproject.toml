@@ -7,7 +7,8 @@ dependencies = ["pydantic>=2", "httpx"]
 
 [project.optional-dependencies]
 backend = ["fastapi", "uvicorn", "openai", "python-dotenv", "hermes-agent"]
-frontend = ["streamlit", "pypdf"]
+frontend = ["streamlit", "pypdf", "websocket-client>=1.8"]
+dev = ["pytest>=8", "pytest-timeout>=2"]
 
 [build-system]
 requires = ["hatchling"]
@@ -18,3 +19,15 @@ packages = ["agent_backend", "api_common", "frontend_demo"]
 
 [tool.uv.sources]
 hermes-agent = { path = "vendor/hermes-agent", editable = true }
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]  # lets test modules write `from tests.helpers import ...`
+addopts = "-ra"
+timeout = 600
+markers = [
+    "live: calls the real OpenRouter models. Costs credits and is stochastic. Needs RUN_LIVE_TESTS=1 and OPENROUTER_API_KEY",
+    "web: live test that also uses OpenRouter web search. Needs RUN_LIVE_TESTS=1 and OPENROUTER_API_KEY",
+    "slow: takes several seconds or more even when offline",
+    "e2e: drives the whole pipeline from request to conclusions",
+]

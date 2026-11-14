@@ -34,6 +34,12 @@ class BackendClient:
     def chat(self, run_id: UUID, message: str) -> ChatResponse:
         return ChatResponse.model_validate(self._send("POST", f"/runs/{run_id}/chat", ChatRequest(message=message)))
 
+    def events_url(self, run_id: UUID, after: int = 0) -> str:
+        """Address of the live event stream, for a websocket client. Reconnect with after=<last seq>."""
+        base = str(self.http.base_url).rstrip("/")
+        ws_base = base.replace("https://", "wss://").replace("http://", "ws://")
+        return f"{ws_base}/runs/{run_id}/events?after={after}"
+
     def _send(self, method: str, path: str, body: BaseModel | None = None) -> dict:
         response = self.http.request(method, path, json=body and body.model_dump(mode="json"))
         if response.is_error:

@@ -1,4 +1,5 @@
 import os
+from collections.abc import Callable
 
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -22,13 +23,36 @@ class OpenRouterClient:
         self.model = model_for(task)
         self.client = OpenAI(base_url=BASE_URL, api_key=os.environ["OPENROUTER_API_KEY"])
 
-    def text(self, system: str, prompt: str, web_search: bool = False) -> str:
+    def text(
+        self,
+        system: str,
+        prompt: str,
+        web_search: bool = False,
+        on_token: Callable[[str], None] | None = None,
+    ) -> str:
+        if on_token is None:
+            completion = self.client.chat.completions.create(
+                model=self.model,
+                messages=self._messages(system, prompt),
+                **({"tools": [WEB_SEARCH_TOOL]} if web_search else {}),
+            )
+            return completion.choices[0].message.content
+
         completion = self.client.chat.completions.create(
             model=self.model,
             messages=self._messages(system, prompt),
+            stream=True,
             **({"tools": [WEB_SEARCH_TOOL]} if web_search else {}),
         )
-        return completion.choices[0].message.content
+        parts: list[str] = []
+        for chunk in completion:
+            if not chunk.choices:
+                continue
+            content = chunk.choices[0].delta.content or ""
+            if content:
+                parts.append(content)
+                on_token(content)
+        return "".join(parts)
 
     def parse[T: BaseModel](self, system: str, prompt: str, output_model: type[T]) -> T:
         completion = self.client.chat.completions.parse(

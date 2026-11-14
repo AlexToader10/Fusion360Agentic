@@ -16,7 +16,9 @@ class PipelineRequest(BaseModel):
     target_audience: str
     additional_info: str = ""
     business_plan: str = ""  # text of the business plan PDF
+    assumption_count: int | None = Field(None, ge=1, le=20)  # number of assumptions; None lets the model decide
     persona_count: int | None = Field(None, ge=1, le=30)  # size of the persona sample; None lets the model decide
+    question_count: int | None = Field(None, ge=1, le=40)  # number of interview questions; None lets the model decide
 
 
 class PipelineState(BaseModel):

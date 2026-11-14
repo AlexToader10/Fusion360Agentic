@@ -2,12 +2,13 @@
 name = "business-validation"
 version = "0.1.0"
 description = "Agentic pipeline that validates a business idea through simulated customer interviews"
-requires-python = ">=3.14,<3.15"
+requires-python = ">=3.13,<3.14"
 dependencies = ["pydantic>=2", "httpx"]
 
 [project.optional-dependencies]
 backend = ["fastapi", "uvicorn", "openai", "python-dotenv", "hermes-agent"]
 frontend = ["streamlit", "pypdf"]
+test = ["pytest", "pytest-timeout"]
 
 [build-system]
 requires = ["hatchling"]
@@ -18,3 +19,8 @@ packages = ["agent_backend", "api_common", "frontend_demo"]
 
 [tool.uv.sources]
 hermes-agent = { path = "vendor/hermes-agent", editable = true }
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+timeout = 120

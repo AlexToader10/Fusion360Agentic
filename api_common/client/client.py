@@ -37,5 +37,9 @@ class BackendClient:
     def _send(self, method: str, path: str, body: BaseModel | None = None) -> dict:
         response = self.http.request(method, path, json=body and body.model_dump(mode="json"))
         if response.is_error:
-            raise BackendError(response.json().get("detail", response.text))
+            try:
+                detail = response.json().get("detail", response.text)
+            except (ValueError, AttributeError):  # not a JSON object, e.g. a plain-text 500 or a proxy's 502 page
+                detail = response.text
+            raise BackendError(detail)
         return response.json()

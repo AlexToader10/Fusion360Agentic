@@ -20,7 +20,7 @@ Hermes Agent cannot be installed from a wheel, so it is installed in editable mo
 
 ```bash
 git clone https://github.com/NousResearch/hermes-agent.git vendor/hermes-agent
-git -C vendor/hermes-agent checkout c0ef5af5205dbdc25e9e44acd66873b4bb3503c9
+git -C vendor/hermes-agent checkout 6edee205bdb17c1fac556f8db56787ebbf7aa134
 uv sync --all-extras
 cp .env.example .env   # then set OPENROUTER_API_KEY
 ```
@@ -35,6 +35,14 @@ uv run streamlit run frontend_demo/app.py
 ```
 
 The frontend reads the backend address from `BACKEND_URL` (default `http://localhost:8000`).
+
+## Tests
+
+```bash
+uv run pytest
+```
+
+The tests never call OpenRouter: the LLM stages run against scripted fake clients, Hermes Agent is stubbed when `vendor/hermes-agent` is not installed, and the pipeline tests drive the real process pools with fake stages steered through marker files. Tests marked `xfail` document known issues.
 
 ## API
 

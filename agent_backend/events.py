@@ -1,7 +1,7 @@
 """Live progress events for a pipeline run.
 
-Stages run in threads (the work is network I/O against OpenRouter), so a stage can call its reporter directly.
-The run manager stores the events and the WebSocket endpoint streams them to the frontend.
+A stage reports through its Reporter from its own process. The pipeline brings the events to the main process,
+the run manager stores them and the WebSocket endpoint streams them to the frontend.
 """
 
 from __future__ import annotations
@@ -15,7 +15,7 @@ EventSink = Callable[[dict[str, Any]], None]
 
 
 class Reporter:
-    """What a stage uses to report progress. All methods are safe to call from worker threads."""
+    """What a stage uses to report progress. All methods are safe to call from the threads of a stage."""
 
     def __init__(self, stage: str, emit: EventSink):
         self.stage = stage

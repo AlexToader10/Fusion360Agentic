@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import threading
 from collections import deque
+from collections.abc import Callable
 from types import SimpleNamespace
 from typing import Any
 from uuid import uuid4
@@ -94,8 +95,9 @@ def _run_state(status: str, seq: int) -> str:
     return _msg({"kind": "run_state", "seq": seq, "last_seq": seq, "run": {"status": status}})
 
 
-def _url() -> str:
-    return f"ws://testserver/runs/{uuid4()}/events?after=0"
+def _url() -> Callable[[int], str]:
+    run_id = uuid4()
+    return lambda after: f"ws://testserver/runs/{run_id}/events?after={after}"
 
 
 def _join(stream: EventStream) -> None:
@@ -137,7 +139,7 @@ def test_scripted_events_arrive_in_order_and_terminal_state_stops_reader(monkeyp
     assert [event.get("seq") for event in events] == [1, 2, 3]
     assert stream.after == 3
     assert stream.stop_event.is_set()
-    assert fake.urls == [url]
+    assert fake.urls == [url(0)]
 
 
 def test_timeout_during_recv_is_swallowed_and_reading_continues(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -178,6 +180,21 @@ def test_connection_error_reconnects_and_delivers_later_events(monkeypatch: pyte
     assert events[1]["message"] == "resumed"
     assert len(fake.urls) == 2
     assert stream.after == 2
+
+
+def test_reconnect_resumes_after_the_last_event_read(monkeypatch: pytest.MonkeyPatch) -> None:
+    url = _url()
+    fake = _install(
+        monkeypatch,
+        _FakeConnection(_msg({"kind": "token", "seq": 4, "message": "Hel"}), ConnectionResetError("socket dropped")),
+        _FakeConnection(_run_state("completed", seq=5)),
+    )
+    stream = EventStream(url).start()
+
+    _join(stream)
+
+    assert fake.urls == [url(0), url(4)]
+    assert [event.get("seq") for event in stream.drain()] == [4, None, 5]
 
 
 def test_drain_empties_queue_and_second_call_returns_empty_list() -> None:

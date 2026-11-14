@@ -1,13 +1,15 @@
-"""Offline state-machine tests for the thread-based Pipeline, RunManager, EventLog and Reporter.
+"""Offline state-machine tests for the Pipeline, RunManager, EventLog and Reporter.
 
-No network and no models: fake stages and a fake pipeline stand in for the real ones. Callbacks are waited on with a
-condition variable or threading.Event, not sleeps.
+No network and no models: fake stages and a fake pipeline stand in for the real ones. The fake stages share
+threading.Events with the test, so the pipeline runs them in thread pools; one test at the end uses the real
+process pools. Callbacks are waited on with a condition variable or threading.Event, not sleeps.
 """
 
 from __future__ import annotations
 
 import threading
 from collections.abc import Callable, Iterator
+from concurrent.futures import ThreadPoolExecutor
 from uuid import UUID, uuid4
 
 import pytest
@@ -80,9 +82,9 @@ class _Recorder:
             target.append(item)
             self._cond.notify_all()
 
-    def wait_until(self, predicate: Callable[[_Recorder], bool]) -> None:
+    def wait_until(self, predicate: Callable[[_Recorder], bool], timeout: float = WAIT) -> None:
         with self._cond:
-            ok = self._cond.wait_for(lambda: predicate(self), WAIT)
+            ok = self._cond.wait_for(lambda: predicate(self), timeout)
         assert ok, "timed out waiting for pipeline callbacks"
 
     def kinds(self, job_id: UUID) -> list[str]:
@@ -108,7 +110,7 @@ class _FakePipeline:
 
 
 def _manager() -> RunManager:
-    """A RunManager whose real thread pool is shut down and replaced by a fake, so no threads leak."""
+    """A RunManager whose real pipeline is shut down and replaced by a fake, so nothing leaks."""
     manager = RunManager()
     manager.pipeline.shutdown()
     manager.pipeline = _FakePipeline()
@@ -120,7 +122,10 @@ def _kinds(manager: RunManager, run_id: UUID) -> list[str]:
 
 
 @pytest.fixture
-def build_pipeline() -> Iterator[Callable[[list[_FakeStage]], tuple[Pipeline, _Recorder]]]:
+def build_pipeline(
+    monkeypatch: pytest.MonkeyPatch,
+) -> Iterator[Callable[[list[_FakeStage]], tuple[Pipeline, _Recorder]]]:
+    monkeypatch.setattr("agent_backend.pipeline.ProcessPoolExecutor", ThreadPoolExecutor)
     pipelines: list[Pipeline] = []
 
     def build(stages: list[_FakeStage]) -> tuple[Pipeline, _Recorder]:
@@ -253,6 +258,7 @@ def test_stopped_stage_drops_late_events_and_done_callback_and_new_job_gets_its_
 
     pipeline.submit(first, PipelineState(request=PipelineRequest(business_idea="job-one", target_audience="a")))
     assert chatty.reported.wait(WAIT)
+    rec.wait_until(lambda r: len(r.kinds(first)) == 3)  # events cross a queue, so let the early ones arrive
     future = pipeline.futures[first]
     finished = threading.Event()
     future.add_done_callback(lambda _future: finished.set())
@@ -295,6 +301,42 @@ def test_stopped_stage_drops_late_events_and_done_callback_and_new_job_gets_its_
     ]
     assert [call.request.business_idea for call in following.calls] == ["job-two"]
     assert rec.kinds(first) == ["stage_started", "status", "token"]
+
+
+class _ReportingStage:
+    """Picklable stage for the real process pools: reports, then appends its name to the business idea."""
+
+    def __init__(self, name: str) -> None:
+        self.name = name
+
+    def run(self, state: PipelineState, report: Reporter | None = None) -> PipelineState:
+        report.status(f"{self.name} working")
+        request = state.request.model_copy(update={"business_idea": f"{state.request.business_idea} > {self.name}"})
+        return PipelineState(request=request)
+
+
+@pytest.mark.slow
+def test_process_pools_chain_outputs_and_deliver_stage_events_before_completion():
+    """With the real process pools, a stage's output feeds the next stage and its events arrive before its completion."""
+    rec = _Recorder()
+    pipeline = Pipeline([_ReportingStage("a"), _ReportingStage("b")], rec.on_stage_done, rec.on_error, rec.on_event)
+    job = uuid4()
+    try:
+        pipeline.submit(job, PipelineState(request=_request()))
+        rec.wait_until(lambda r: r.kinds(job).count("stage_completed") == 2 or bool(r.errors), timeout=60)
+    finally:
+        pipeline.shutdown()
+
+    assert rec.errors == []
+    assert [state.request.business_idea for _, state in rec.done] == ["idea > a", "idea > a > b"]
+    assert [(event["kind"], event["stage"]) for _, event in rec.events] == [
+        ("stage_started", "a"),
+        ("status", "a"),
+        ("stage_completed", "a"),
+        ("stage_started", "b"),
+        ("status", "b"),
+        ("stage_completed", "b"),
+    ]
 
 
 def test_run_manager_start_creates_running_run_and_submits_stage_zero(sample_request):

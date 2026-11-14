@@ -10,6 +10,7 @@ import json
 import queue
 import threading
 import time
+from collections.abc import Callable
 
 try:
     import websocket  # type: ignore[import-not-found]
@@ -18,9 +19,9 @@ except ImportError:  # the frontend still works through HTTP polling; only the l
 
 
 class EventStream:
-    def __init__(self, url: str, after: int = 0):
-        self.url = url
-        self.after = after
+    def __init__(self, events_url: Callable[[int], str], after: int = 0):
+        self.events_url = events_url  # address of the stream after a given seq
+        self.after = after  # seq of the last event read, where a reconnect resumes
         self.queue: queue.Queue[dict] = queue.Queue()
         self.stop_event = threading.Event()
         self.thread = threading.Thread(target=self._run, name="pipeline-events", daemon=True)
@@ -50,7 +51,7 @@ class EventStream:
             return
         while not self.stop_event.is_set():
             try:
-                connection = websocket.create_connection(self.url, timeout=10)
+                connection = websocket.create_connection(self.events_url(self.after), timeout=10)
                 connection.settimeout(1.0)
                 while not self.stop_event.is_set():
                     try:

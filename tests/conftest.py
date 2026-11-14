@@ -58,7 +58,12 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
             item.add_marker(pytest.mark.skip(reason=reason))
 
 
+_connect = socket.socket.connect
+
+
 def _refuse_connection(self: socket.socket, *args: object, **kwargs: object) -> None:
+    if self.family == socket.AF_UNIX:  # local IPC: the queue the pipeline shares with its stage processes
+        return _connect(self, *args, **kwargs)
     raise RuntimeError(
         "network access is blocked in offline tests. Mark the test live or web, or request the allow_network fixture"
     )

@@ -5,7 +5,7 @@ Takes a business idea and a target audience and validates the idea through simul
 ## Layout
 
 - `agent_backend/` is the FastAPI service.
-  - `pipeline.py` chains the stages. Each stage runs in its own thread pool and its output is the input of the next one.
+  - `pipeline.py` chains the stages. Each stage runs in its own process pool and its output is the input of the next one. The stages report their progress to the main process through a queue.
   - `events.py` is the live reporter and event log behind the WebSocket.
   - `stages/` holds one class per stage, each with a `run` method: assumptions, personas, questions (generator and judge loop), interviews (deep research persona and interviewer), validations, conclusions.
   - `runs.py` starts, stops, edits and resumes runs. The HTTP paths, the WebSocket and the edit agent call the same methods.
@@ -65,10 +65,6 @@ After the run starts, each stage appears as a chat message. The current stage sh
 The WebSocket sends `stage_started`, `status`, `token`, `stage_completed`, `stage_failed`, `stage_edited`, `run_stopped`, `run_resumed`, `run_completed`, `run_failed` and `run_state` messages. Each event has a monotonic `seq`; reconnect with `?after=<last seq>` to resume without missing or repeating events. A `run_state` message carries the full `Run` snapshot, so a reconnecting frontend can render the finished stages immediately.
 
 Editing a stage clears the stages after it, so a resumed run continues right after the earliest edit.
-
-## Why Python
-
-The heavy computation is not in this service. It is in the models behind OpenRouter's inference infrastructure; the Python layer only builds prompts, validates JSON and coordinates I/O-bound HTTP calls. Python is the right level of abstraction for that control plane, and the thread pool in `pipeline.py` keeps the network waits overlapping.
 
 ## Tests
 

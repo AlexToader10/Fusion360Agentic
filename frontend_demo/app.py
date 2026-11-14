@@ -2,6 +2,7 @@
 
 import os
 import time
+from functools import partial
 
 import httpx
 import streamlit as st
@@ -160,7 +161,7 @@ def ensure_stream(run: Run) -> EventStream | None:
         if stream is None or not stream.alive:
             events = st.session_state.get("events", [])
             after = max((event.get("seq", 0) for event in events), default=0)
-            stream = EventStream(client.events_url(run.id, after)).start()
+            stream = EventStream(partial(client.events_url, run.id), after).start()
             st.session_state.stream = stream
     elif stream is not None and stream.alive:
         stream.stop()

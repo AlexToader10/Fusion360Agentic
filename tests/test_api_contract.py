@@ -99,6 +99,7 @@ class _FakeEditAgent:
 @pytest.fixture
 def manager(monkeypatch: pytest.MonkeyPatch) -> RunManager:
     fresh = RunManager()
+    fresh.pipeline.shutdown()
     fresh.pipeline = _FakePipeline()  # type: ignore[assignment]
     monkeypatch.setattr(app_main, "manager", fresh)
     return fresh

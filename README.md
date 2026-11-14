@@ -16,11 +16,7 @@ Takes a business idea and a target audience and validates the idea through simul
 
 ## Setup
 
-Hermes Agent cannot be installed from a wheel, so it is installed in editable mode from a local checkout:
-
 ```bash
-git clone https://github.com/NousResearch/hermes-agent.git vendor/hermes-agent
-git -C vendor/hermes-agent checkout c0ef5af5205dbdc25e9e44acd66873b4bb3503c9
 uv sync --all-extras
 cp .env.example .env   # then set OPENROUTER_API_KEY
 ```
@@ -42,7 +38,7 @@ The frontend reads the backend address from `BACKEND_URL` (default `http://local
 ./deploy.sh
 ```
 
-Builds both images and starts the backend on port 8000 and the frontend on port 8501 with Docker Compose. It needs `.env` but not the local Hermes checkout. `docker compose down` stops them.
+Builds both images and starts the backend on port 8000 and the frontend on port 8501 with Docker Compose. It needs `.env`. `docker compose down` stops them.
 
 ## API
 

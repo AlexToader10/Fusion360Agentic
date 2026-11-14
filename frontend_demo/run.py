@@ -80,8 +80,24 @@ def unfinished_stage(run: Run, stage: str, log: list[dict]) -> None:
     control(run, "page")
 
 
+def finished_stage(run: Run, stage: str, drafts: dict) -> None:
+    """A finished stage under its header: its output with an Edit button, or its editor once that was pressed."""
+    with st.container(horizontal=True, horizontal_alignment="distribute", vertical_alignment="bottom"):
+        st.header(stage.capitalize(), anchor=stage)
+        if run.status != RunStatus.RUNNING and stage not in drafts:
+            key = f"start_{stage}"
+            st.button("Edit", icon=":material/edit:", type="tertiary", on_click=edit.start, args=(run, stage), key=key)
+    if stage in drafts:
+        edit.form(run, stage)
+    else:
+        VIEWS[stage](run.state)
+
+
 def page() -> None:
     run = client.get_run(st.session_state.run_id)
+    drafts = st.session_state.setdefault("drafts", {})
+    if run.status == RunStatus.RUNNING:
+        drafts.clear()  # an editor left open is out of date once the run moves again
     log = live.events(run)
     unfinished = next((stage for stage in STAGE_OUTPUTS if getattr(run.state, stage) is None), None)
 
@@ -95,10 +111,7 @@ def page() -> None:
     for stage in STAGE_OUTPUTS:
         if getattr(run.state, stage) is None:
             break
-        st.header(stage.capitalize(), anchor=stage)
-        VIEWS[stage](run.state)
-        if run.status != RunStatus.RUNNING:
-            edit.form(run, stage)
+        finished_stage(run, stage, drafts)
     if unfinished:
         unfinished_stage(run, unfinished, log)
     edit.chat(run)

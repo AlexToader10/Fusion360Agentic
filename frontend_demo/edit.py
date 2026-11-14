@@ -1,36 +1,36 @@
-"""The two ways to change a finished stage: its edit form and the chat with the edit agent."""
+"""The two ways to change a finished stage: its editor and the chat with the edit agent."""
 
 import streamlit as st
-from pydantic import ValidationError
 
 from api_common.assets.common import STAGE_OUTPUTS, Run, RunStatus
+from frontend_demo.editors import EDITORS
 from frontend_demo.session import act, client
 from frontend_demo.views import text
 
-TABLE_STAGES = ("assumptions", "personas", "questions")  # outputs that are one flat list, edited as a table
 AVATAR = {"user": ":material/person:", "assistant": ":material/psychiatry:"}  # the agent wears the seedling
 
 
+def start(run: Run, stage: str) -> None:
+    """Open the editor of a stage on a draft: a copy of its output that the run does not see before it is saved."""
+    st.session_state.drafts[stage] = getattr(run.state, stage).model_dump()
+
+
 def form(run: Run, stage: str) -> None:
-    output_model = STAGE_OUTPUTS[stage]
-    output = getattr(run.state, stage)
-    with st.expander(f"Edit {stage}", icon=":material/edit:"), st.form(f"edit_{stage}", border=False):
-        if stage in TABLE_STAGES:
-            rows = st.data_editor(output.model_dump()[stage], num_rows="dynamic", hide_index=True)
-        else:
-            json_text = st.text_area(f"{stage.capitalize()} as JSON", output.model_dump_json(indent=2), height=400)
-        st.caption("Saving clears the stages after this one. Resume the run to generate them again.")
-        if not st.form_submit_button("Save changes"):
-            return
-        try:
-            if stage in TABLE_STAGES:
-                edited = output_model.model_validate({stage: rows})
-            else:
-                edited = output_model.model_validate_json(json_text)
-        except ValidationError as error:
-            st.error(str(error))
-            return
-        act(client.edit_stage, run.id, stage, edited)
+    """The editor of a stage. Save changes sends the edited draft to the run, Cancel throws the draft away."""
+    drafts = st.session_state.drafts
+    stages = list(STAGE_OUTPUTS)
+    cleared = [later for later in stages[stages.index(stage) + 1 :] if getattr(run.state, later) is not None]
+    # style.css finds the fields of an editor through the key of this container
+    with st.container(key=f"editor_{stage}"), st.form(f"edit_{stage}", enter_to_submit=False, border=False):
+        edited = EDITORS[stage](drafts[stage], run.state)
+        if cleared:
+            st.caption(f"Saving clears {', '.join(cleared)}. Resume the run to generate them again.")
+        with st.container(horizontal=True):
+            save = st.form_submit_button("Save changes", key=f"save_{stage}", type="primary")
+            st.form_submit_button("Cancel", key=f"cancel_{stage}", on_click=drafts.pop, args=(stage,))
+    if save:
+        act(client.edit_stage, run.id, stage, STAGE_OUTPUTS[stage].model_validate(edited))
+        del drafts[stage]
         st.rerun()
 
 

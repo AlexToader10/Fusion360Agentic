@@ -15,7 +15,7 @@ Takes a business idea and a target audience and validates the idea through simul
 - `api_common/client/` is the Python client of the backend. `events_url()` returns the WebSocket address.
 - `frontend_demo/` is the Streamlit frontend. It only talks to the backend through the client.
   - `app.py` picks the screen: `start.py` before a run, `run.py` during and after one.
-  - `views.py` draws the output of each finished stage, `live.py` the stage that is running, `edit.py` the edit forms and the chat.
+  - `views.py` draws the output of each finished stage and `editors.py` the form fields that edit it, `live.py` the stage that is running, `edit.py` the edit form around those fields and the chat.
   - `stream.py` reads the WebSocket in a background thread so the Stop button stays clickable while tokens arrive.
   - `session.py` holds the backend client and the run of the browser session.
   - The look lives in `.streamlit/config.toml` (colors, fonts, corners) and `style.css` (what the theme cannot express).
@@ -55,7 +55,7 @@ The start screen has two ways in, side by side:
 
 The additional info field is also where the size of the run goes, in plain words, for example "5 assumptions, 3 personas and 6 questions". Without it the model picks the sizes.
 
-After the run starts, the page is one document that grows as the stages finish. The sidebar lists the six stages with their progress, and each finished one links to its section. The running stage shows a live trace: status lines from the backend and, during interviews, the persona's answer as it is generated. Stop run sits under that trace and in the sidebar. Stopping holds the run at the current stage; every finished stage has an inline editor; saving an edit clears the later stages, and Resume run regenerates them from that point. The chat for asking the agent for edits stays at the bottom of the page.
+After the run starts, the page is one document that grows as the stages finish. The sidebar lists the six stages with their progress, and each finished one links to its section. The running stage shows a live trace: status lines from the backend and, during interviews, the persona's answer as it is generated. Stop run sits under that trace and in the sidebar. Stopping holds the run at the current stage; every finished stage has an Edit button that turns its section into a form, with no JSON or ids to type: text fields for the wording, a picker for the assumptions a persona or question is about, three choices for a verdict, and buttons that add or remove assumptions, personas and questions. Saving an edit clears the later stages, and Resume run regenerates them from that point. The chat for asking the agent for edits stays at the bottom of the page.
 
 Validations are one table with a row per assumption and a column per interview. A verdict is a shape as well as a color (check, cross or empty ring), and hovering one shows its evidence.
 

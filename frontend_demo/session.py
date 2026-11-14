@@ -21,5 +21,5 @@ def reset_run() -> None:
     stream = st.session_state.get("stream")
     if stream is not None:
         stream.stop()
-    for key in ("run_id", "chat", "events", "stream", "error"):
+    for key in ("run_id", "chat", "events", "stream", "error", "drafts"):
         st.session_state.pop(key, None)

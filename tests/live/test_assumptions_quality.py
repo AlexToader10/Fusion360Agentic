@@ -121,7 +121,7 @@ def _is_declarative(statement: str) -> bool:
 
 @pytest.mark.parametrize("key", [SERIOUS, ABSURD])
 def test_the_list_is_short_numbered_and_never_repeats_an_id(assumption_runs: dict[str, AssumptionsOutput], key: str):
-    """Six to eight riskiest assumptions, numbered A1..An in order with no gaps or duplicates."""
+    """Six to eight assumptions, numbered A1..An in order with no gaps or duplicates."""
     assumptions = assumption_runs[key].assumptions
 
     assert 6 <= len(assumptions) <= 8, f"{key}: expected 6 to 8 assumptions, got {len(assumptions)}"

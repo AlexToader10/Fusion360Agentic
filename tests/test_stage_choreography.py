@@ -84,10 +84,10 @@ def test_assumptions_with_count_seven_asks_for_seven_and_sends_context(
     call = fake.calls[0]
     assert call.task == "assumptions"
     assert call.output_model is AssumptionsOutput
-    assert "the 7 riskiest assumptions" in call.system
+    assert "the 7 most relevant business assumptions" in call.system
     assert call.prompt == business_context(request)
     assert result.assumptions == sample_assumptions
-    assert "7 risky assumptions" in events[0]["message"]
+    assert "7 business assumptions" in events[0]["message"]
     assert events[-1]["data"]["count"] == len(sample_assumptions.assumptions)
 
 
@@ -100,8 +100,8 @@ def test_assumptions_without_count_lets_the_model_pick_six_to_eight(
 
     assumptions_stage.AssumptionsStage().run(PipelineState(request=request), report)
 
-    assert "6 to 8 riskiest assumptions" in fake.calls[0].system
-    assert "6 to 8 risky" in events[0]["message"]
+    assert "6 to 8 most relevant business assumptions" in fake.calls[0].system
+    assert "6 to 8 business" in events[0]["message"]
 
 
 def test_personas_with_count_four_asks_for_four_and_includes_assumptions(

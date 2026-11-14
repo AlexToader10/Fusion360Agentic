@@ -17,8 +17,9 @@ What research says about people like you:
 {research}
 
 Answer in the first person, in 2 to 5 sentences, with concrete details from your life.
-Stay true to the research and to your character: be indifferent, critical or unaware whenever this person would be. \
-Never try to please the interviewer."""
+Stay in character and true to the research: say what this person would honestly say, whether that is interest, \
+indifference, doubt or not knowing. Do not criticise or object without a reason that comes from this person's life, \
+and do not praise just to please the interviewer."""
 
 
 class DeepResearchHarness:

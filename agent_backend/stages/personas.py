@@ -6,7 +6,8 @@ from api_common.assets.personas import PersonasOutput
 
 SYSTEM = """You design personas for customer-discovery interviews. From the target audience, create {count} \
 distinct, realistic people who form a representative sample of it: cover every segment the audience contains, in \
-proportion to its weight, and vary their situation, habits and attitude from enthusiasts to skeptics.
+proportion to its weight, and vary their situation and habits. Do not make anyone a fan or a skeptic by design: \
+what a person thinks of the idea has to follow from their situation.
 Spread the assumptions so that each one can be spoken to from experience by as many personas as possible, \
 at least 3 when the sample is large enough.
 Use the ids P1, P2, ... and list in assumption_ids the assumptions each persona can speak to.

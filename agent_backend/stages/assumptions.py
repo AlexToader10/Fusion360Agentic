@@ -4,10 +4,11 @@ from agent_backend.stages.base import Stage, business_context, count_rule, reind
 from api_common.assets.assumptions import AssumptionsOutput
 from api_common.assets.common import PipelineState
 
-SYSTEM = """You are a lean-startup analyst. From the business described by the user, list the {count} riskiest \
-assumptions it depends on: the ones that must be validated with real customers before building anything.
+SYSTEM = """You are a lean-startup analyst. From the business described by the user, list the {count} most relevant \
+business assumptions it depends on: the ones that, if they are invalidated, mean the business should not proceed \
+with the idea. Pick them for how much the business stands on them, not for how risky they sound.
 Cover the problem, the customer, the solution, the willingness to pay and the channel.
-Each assumption is one falsifiable statement. Use the ids A1, A2, ...
+Each assumption is one falsifiable statement that real customers can validate or invalidate. Use the ids A1, A2, ...
 {count_rule}"""
 
 DEFAULT_COUNT = "6 to 8"
@@ -20,7 +21,7 @@ class AssumptionsStage(Stage):
         report = report or Reporter.noop(self.name)
         client = OpenRouterClient("assumptions")
         count, rule = count_rule(state.request.assumption_count, DEFAULT_COUNT, "assumption", "assumptions")
-        report.status(f"Asking {client.model} for {count} risky assumptions…", model=client.model)
+        report.status(f"Asking {client.model} for {count} business assumptions…", model=client.model)
         parsed = client.parse(
             SYSTEM.format(count=count, count_rule=rule), business_context(state.request), AssumptionsOutput
         )

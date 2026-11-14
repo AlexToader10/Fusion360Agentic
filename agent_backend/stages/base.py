@@ -13,10 +13,11 @@ def count_rule(count: int | None, default: str, singular: str, plural: str) -> t
     """What to show in the prompt, plus a sentence that asks for that exact sample size.
 
     A model that is asked for "1 persona" politely and nothing else may return a whole cast. The explicit rule
-    makes the requested size part of the contract, not a suggestion.
+    makes the requested size part of the contract, not a suggestion. Without a count, the user can still ask for
+    a size in plain words in the additional info.
     """
     if count is None:
-        return default, f"Return {default} {plural}."
+        return default, f"Return {default} {plural}, unless the additional info asks for a different number of {plural}."
     noun = singular if count == 1 else plural
     return str(count), f"Return exactly {count} {noun}, no more and no fewer."
 

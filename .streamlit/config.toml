@@ -1,0 +1,39 @@
+[theme]
+base = "light"
+
+# Leaf for actions, soil for text, mint for quiet surfaces, sprout for hairlines
+primaryColor = "#15884B"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#EDF8F1"
+textColor = "#1F3A2C"
+borderColor = "#C9E8D5"
+linkColor = "#0E5C33"
+
+# Status colors: leaf is validated and done, beet is invalidated and failed, pollen is stopped, stone is undecided.
+# Leaf and beet stay apart for red-green colorblind readers.
+greenColor = "#15884B"
+greenBackgroundColor = "#DDF3E5"
+greenTextColor = "#0E5C33"
+redColor = "#9C1B4F"
+redBackgroundColor = "#F9E8EF"
+redTextColor = "#7E1640"
+yellowColor = "#A87400"
+yellowBackgroundColor = "#FFF1C2"
+yellowTextColor = "#7A5200"
+grayColor = "#5F6E66"
+grayBackgroundColor = "#EEF2EF"
+grayTextColor = "#5F6E66"
+
+# Young Serif speaks in the headings, Nunito everywhere else. Sizes step by a perfect fourth from 1rem.
+font = "Nunito:https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap"
+headingFont = "'Young Serif':https://fonts.googleapis.com/css2?family=Young+Serif&display=swap"
+headingFontSizes = ["3.157rem", "1.777rem", "1.333rem"]
+headingFontWeights = 400
+
+# Pills are for actions, the softer corner for surfaces and fields
+baseRadius = "0.75rem"
+buttonRadius = "full"
+
+[theme.sidebar]
+headingFontSizes = ["1.777rem", "1.333rem", "1rem"]
+headingFontWeights = 400

@@ -14,5 +14,6 @@ FROM base AS frontend
 RUN uv sync --frozen --no-install-project --extra frontend
 COPY api_common api_common
 COPY frontend_demo frontend_demo
+COPY .streamlit/config.toml .streamlit/config.toml
 EXPOSE 8501
 CMD ["streamlit", "run", "frontend_demo/app.py", "--server.address", "0.0.0.0", "--server.port", "8501"]

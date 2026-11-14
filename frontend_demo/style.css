@@ -1,0 +1,338 @@
+/* What the theme in .streamlit/config.toml cannot express. The colors repeat the ones set there. */
+
+:root {
+  --leaf: #15884b; /* validated */
+  --leaf-deep: #0e5c33;
+  --leaf-wash: #ddf3e5;
+  --beet: #9c1b4f; /* invalidated */
+  --stone: #5f6e66; /* inconclusive, quiet text */
+  --mint: #edf8f1;
+  --sprout: #c9e8d5; /* hairlines */
+  --display: "Young Serif", serif;
+  --gutter: 3rem; /* where the ids hang, left of the text they belong to */
+}
+
+/* Page: wide enough for the persona cards and the verdict table, with text kept to a readable line */
+
+.stApp [data-testid="stMainBlockContainer"],
+.stApp [data-testid="stBottomBlockContainer"] {
+  max-width: 64rem;
+  padding-inline: clamp(1rem, 4vw, 3rem);
+}
+
+[data-testid="stMainBlockContainer"] [data-testid="stMarkdownContainer"] p,
+[data-testid="stMainBlockContainer"] [data-testid="stMarkdownContainer"] li {
+  max-width: 68ch;
+}
+
+[data-testid="stMainBlockContainer"] h1 {
+  line-height: 1.1;
+}
+
+[data-testid="stMainBlockContainer"] h2 {
+  padding-top: 2.5rem;
+}
+
+[data-testid="stCaptionContainer"],
+[data-testid="stCaptionContainer"] p,
+.stApp textarea::placeholder {
+  color: var(--stone);
+  opacity: 1;
+}
+
+/* Streamlit's own script indicator: its Stop halts the page, not the run, so it must not sit next to Stop run */
+[data-testid="stStatusWidget"] {
+  display: none;
+}
+
+/* Start screen: the headline is the one loud thing */
+
+.st-key-hero h1 {
+  max-width: 11em;
+  padding-bottom: 1.5rem;
+  font-size: clamp(2.5rem, 7vw, 4.209rem);
+  line-height: 1.05;
+}
+
+/* The upload box is as tall as the three fields beside it: three fields and two gaps, less its own label */
+.stApp [data-testid="stFileUploaderDropzone"] {
+  min-height: calc(3 * 7.5rem + 2 * 1rem - 1.875rem);
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 0.75rem;
+  border: 2px dashed var(--sprout);
+}
+
+.stApp [data-testid="stFileUploaderDropzoneInstructions"] {
+  flex: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  text-align: center;
+}
+
+.stApp [data-testid="stFileUploaderDropzoneInstructions"] > div {
+  align-items: center;
+}
+
+/* Sidebar: the stages as progress and as a table of contents */
+
+.st-key-steps p {
+  line-height: 2.25;
+}
+
+.st-key-steps a {
+  text-decoration: none;
+}
+
+.st-key-steps a:hover {
+  text-decoration: underline;
+}
+
+/* Ids and the tags next to them */
+
+.chip {
+  display: inline-block;
+  padding: 0 0.5rem;
+  border-radius: 999px;
+  background: var(--leaf-wash);
+  color: var(--leaf-deep);
+  font-size: 0.8125rem;
+  font-weight: 800;
+  line-height: 1.5rem;
+  white-space: nowrap;
+}
+
+.chip[title]:not([title=""]) {
+  cursor: help;
+}
+
+.chip + .chip {
+  margin-left: 0.25rem;
+}
+
+.tag,
+.verdict {
+  color: var(--stone);
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+/* A verdict is a shape before it is a color: filled check, filled cross, empty ring */
+
+.mark {
+  display: inline-block;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  background: center / 60% no-repeat;
+  vertical-align: -0.25rem;
+}
+
+.mark.validated {
+  background-color: var(--leaf);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.2 6.4l2.6 2.6 5-6' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+.mark.invalidated {
+  background-color: var(--beet);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M3 3l6 6m0-6l-6 6' fill='none' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+
+.mark.inconclusive {
+  box-shadow: inset 0 0 0 2px var(--stone);
+}
+
+/* Rows: an id hanging in the gutter, the text, and an aside at the right */
+
+.stApp .rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rows li {
+  display: grid;
+  grid-template-columns: var(--gutter) minmax(0, 1fr) auto;
+  column-gap: 0.75rem;
+  padding: 0.625rem 0;
+}
+
+.rows p {
+  margin: 0;
+}
+
+.rows .main {
+  font-weight: 600;
+}
+
+.rows .main + .note {
+  color: var(--stone);
+}
+
+.rows .aside {
+  text-align: right;
+}
+
+/* Personas are people, so they are the one stage drawn as cards */
+
+.stApp .personas {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.personas li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  padding: 1.25rem;
+  border: 1px solid var(--sprout);
+  border-radius: 0.75rem;
+}
+
+.personas p {
+  margin: 0;
+}
+
+.personas .name {
+  font-family: var(--display);
+  font-size: 1.333rem;
+  line-height: 1.2;
+}
+
+.personas .note {
+  margin-top: -0.375rem;
+  color: var(--stone);
+}
+
+.personas .speaks {
+  margin-top: auto;
+  padding-top: 0.375rem;
+}
+
+/* Interviews: the question in bold, the persona's own words set off as a quote */
+
+[data-testid="stMainBlockContainer"] [data-testid="stMarkdownContainer"] blockquote {
+  margin: 0.5rem 0 1.5rem;
+  padding: 0 0 0 1rem;
+  border-left: 3px solid var(--leaf);
+  opacity: 1;
+}
+
+/* In a transcript the answer sits under its question, past the gutter the question's id hangs in */
+[class*="st-key-transcript_"] .rows li {
+  padding-bottom: 0;
+}
+
+[data-testid="stMainBlockContainer"] [class*="st-key-transcript_"] blockquote {
+  margin: 0 0 1rem calc(var(--gutter) + 0.75rem);
+}
+
+/* Verdicts: one row per assumption, one column per interview */
+
+.verdicts {
+  overflow-x: auto;
+}
+
+.verdicts .legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.25rem;
+  margin: 0 0 1rem;
+}
+
+.verdicts table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.verdicts th,
+.verdicts td {
+  border: 0;
+  padding: 0.625rem 0;
+}
+
+.verdicts thead th {
+  min-width: 2.75rem;
+  padding-bottom: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  vertical-align: bottom;
+}
+
+.verdicts thead span {
+  display: inline-block;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  white-space: nowrap;
+}
+
+.verdicts tbody tr {
+  border-top: 1px solid var(--sprout);
+}
+
+.verdicts tbody th {
+  width: 100%;
+  min-width: 15rem;
+  padding-right: 1rem;
+  font-weight: 600;
+  text-align: left;
+}
+
+.verdicts tbody th div {
+  display: grid;
+  grid-template-columns: var(--gutter) minmax(0, 1fr);
+  column-gap: 0.75rem;
+  align-items: start;
+  justify-items: start;
+}
+
+.verdicts td {
+  min-width: 2.75rem;
+  text-align: center;
+}
+
+.verdicts td .mark {
+  cursor: help;
+}
+
+/* Conclusions: the summary is the answer, so it gets the display face */
+
+.st-key-summary p {
+  max-width: 36em;
+  font-family: var(--display);
+  font-size: 1.333rem;
+  line-height: 1.45;
+}
+
+.tally {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.5rem;
+  margin: 0.5rem 0;
+}
+
+@media (max-width: 40rem) {
+  :root {
+    --gutter: 2.5rem;
+  }
+
+  .rows li {
+    grid-template-columns: var(--gutter) minmax(0, 1fr);
+  }
+
+  .rows .aside {
+    grid-column: 2;
+    padding-top: 0.25rem;
+    text-align: left;
+  }
+
+  .verdicts tbody th {
+    min-width: 11rem;
+  }
+}

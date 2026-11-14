@@ -4,5 +4,6 @@
 !agent_backend
 !api_common
 !frontend_demo
+!.streamlit/config.toml
 **/__pycache__
 **/.hermes_home

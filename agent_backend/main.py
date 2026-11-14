@@ -1,16 +1,19 @@
+import asyncio
 from contextlib import asynccontextmanager
 from uuid import UUID
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from agent_backend.edit_agent.agent import EditAgent
 from agent_backend.runs import InvalidAction, RunManager, RunNotFound
-from api_common.assets.common import STAGE_OUTPUTS, ChatRequest, ChatResponse, PipelineRequest, Run
+from api_common.assets.common import STAGE_OUTPUTS, ChatRequest, ChatResponse, PipelineRequest, Run, RunStatus
 
 manager = RunManager()
 edit_agent = EditAgent(manager)
+
+TERMINAL_STATUSES = {RunStatus.COMPLETED, RunStatus.FAILED, RunStatus.STOPPED}
 
 
 @asynccontextmanager
@@ -56,6 +59,51 @@ def resume_run(run_id: UUID) -> Run:
 def chat(run_id: UUID, request: ChatRequest) -> ChatResponse:
     manager.get(run_id)
     return ChatResponse(reply=edit_agent.chat(run_id, request.message), run=manager.get(run_id))
+
+
+@app.websocket("/runs/{run_id}/events")
+async def run_events(websocket: WebSocket, run_id: UUID, after: int = 0) -> None:
+    """Stream every pipeline event, then the final run snapshot, until the run stops or finishes.
+
+    Reconnect with the last seq in `after` to resume exactly where the previous socket left off. A stopped run can
+    be edited and resumed; the frontend opens a new socket after the resume.
+    """
+    await websocket.accept()
+    try:
+        manager.get(run_id)
+    except RunNotFound as error:
+        await websocket.send_json({"kind": "error", "message": str(error)})
+        await websocket.close(code=4404)
+        return
+
+    first = True
+    try:
+        while True:
+            for event in manager.events(run_id, after):
+                await websocket.send_json(event)
+                after = event["seq"]
+
+            run = manager.get(run_id)
+            if first or run.status in TERMINAL_STATUSES:
+                await websocket.send_json(
+                    {"kind": "run_state", "last_seq": manager.last_event_seq(run_id), "run": run.model_dump(mode="json")}
+                )
+                first = False
+
+            if run.status in TERMINAL_STATUSES:
+                break
+            await asyncio.sleep(0.25)
+    except WebSocketDisconnect:
+        return
+    except Exception as error:  # a broken socket must not take the backend down
+        try:
+            await websocket.send_json({"kind": "error", "message": str(error)})
+            await websocket.close(code=1011)
+        except Exception:
+            pass
+        return
+
+    await websocket.close()
 
 
 def add_edit_path(stage: str, output_model: type[BaseModel]) -> None:

@@ -1,3 +1,4 @@
+from agent_backend.events import Reporter
 from agent_backend.openrouter_client import OpenRouterClient
 from api_common.assets.interviews import Exchange
 from api_common.assets.personas import Persona
@@ -23,13 +24,20 @@ Never try to please the interviewer."""
 class DeepResearchHarness:
     """Plays a persona. It first researches the persona's real-world segment on the web, then answers in character."""
 
-    def __init__(self, persona: Persona, business: str):
+    def __init__(self, persona: Persona, business: str, report: Reporter | None = None):
         self.persona = persona
+        self.report = report or Reporter.noop("interviews")
         self.client = OpenRouterClient("persona")
         profile = persona.model_dump_json(indent=2, exclude={"id", "assumption_ids"})
+        self.report.status(f"Researching {persona.name}'s segment on the web…", persona_id=persona.id)
         self.research = self.client.text(RESEARCH_SYSTEM, f"Persona:\n{profile}\n\n{business}", web_search=True)
+        self.report.status(f"Research ready for {persona.name}", persona_id=persona.id)
 
     def answer(self, question: str, exchanges: list[Exchange]) -> str:
         system = PERSONA_SYSTEM.format(research=self.research, **self.persona.model_dump())
         transcript = "\n\n".join(f"Interviewer: {e.question}\nYou: {e.answer}" for e in exchanges)
-        return self.client.text(system, f"{transcript}\n\nInterviewer: {question}".strip())
+        return self.client.text(
+            system,
+            f"{transcript}\n\nInterviewer: {question}".strip(),
+            on_token=lambda token: self.report.token(token, persona_id=self.persona.id),
+        )

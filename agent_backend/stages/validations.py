@@ -1,5 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor
 
+from agent_backend.events import Reporter
 from agent_backend.openrouter_client import OpenRouterClient
 from agent_backend.stages.base import Stage
 from api_common.assets.common import PipelineState
@@ -17,17 +18,31 @@ Judge only on what was said in the answers and cite it as evidence."""
 class ValidationsStage(Stage):
     name = "validations"
 
-    def run(self, state: PipelineState) -> PipelineState:
+    def run(self, state: PipelineState, report: Reporter | None = None) -> PipelineState:
+        report = report or Reporter.noop(self.name)
+        interviews = state.interviews.interviews
+        report.status(f"Validating {len(interviews)} interviews against {len(state.assumptions.assumptions)} assumptions…")
         with ThreadPoolExecutor() as pool:
-            validations = pool.map(lambda interview: self._validate(interview, state), state.interviews.interviews)
+            validations = pool.map(
+                lambda interview: self._validate(
+                    interview,
+                    state,
+                    report.child(persona_id=interview.persona_id),
+                ),
+                interviews,
+            )
             state.validations = ValidationsOutput(validations=list(validations))
+        report.status(f"Validated {len(state.validations.validations)} interviews")
         return state
 
     @staticmethod
-    def _validate(interview: Interview, state: PipelineState) -> InterviewValidation:
+    def _validate(interview: Interview, state: PipelineState, report: Reporter) -> InterviewValidation:
+        report.status(f"Judging {interview.persona_id}'s answers against every assumption…")
         prompt = (
             f"Assumptions:\n{state.assumptions.model_dump_json(indent=2)}\n\n"
             f"Interview with persona {interview.persona_id}:\n"
             f"{interview.model_dump_json(indent=2, include={'persona_id', 'exchanges'})}"
         )
-        return OpenRouterClient("validation").parse(SYSTEM, prompt, InterviewValidation)
+        result = OpenRouterClient("validation").parse(SYSTEM, prompt, InterviewValidation)
+        report.status(f"Verdicts ready for {interview.persona_id}", verdicts=len(result.verdicts))
+        return result
